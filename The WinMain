@@ -1,0 +1,119 @@
+#include<Windows.h>
+#include "resource.h"
+
+LRESULT CALLBACK WindowProc(     //预先声明windowProc回调函数
+	_In_  HWND hwnd,
+	_In_  UINT uMsg,
+	_In_  WPARAM wParam,
+	_In_  LPARAM lParam
+
+);
+
+int CALLBACK WinMain(         //#define CALLBACK _stdcall
+	_In_  HINSTANCE hInstance,
+	_In_  HINSTANCE hPrevInstance,
+	_In_  LPSTR lpCmdLine,
+	_In_  int nCmdShow
+)
+{
+
+	WCHAR* cls_Name = L"My Classs";
+	WNDCLASSW ws;
+	ws.hbrBackground = (HBRUSH)COLOR_WINDOW; //窗口背景色设置为windows的默认值；
+	ws.cbClsExtra = 0;
+	ws.cbWndExtra = 0;
+	ws.hCursor = LoadCursor(NULL,IDC_CROSS);
+	ws.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));      //运行时的图标设置为resourch.h中的IDI_ICON1，使用宏MAKEINTERSOURCE来转换为内部资源；
+	ws.lpszMenuName = NULL;
+	ws.style = CS_DBLCLKS; 
+	ws.lpfnWndProc = WindowProc;   //将回调函数WindowProc交给该窗口类
+	ws.lpszClassName = cls_Name;   //
+	ws.hInstance = hInstance;     //窗口的应用程序实例设置为当前winmain函数的hIntance
+	RegisterClass (&ws);        //创建了窗口类，还需要向系统注册；
+
+	//使用这个窗口类显示窗口
+
+	HWND hwnd = CreateWindow(cls_Name,   //窗口类名
+		L"我建立的窗口",
+		WS_OVERLAPPEDWINDOW, //窗口样式
+		0,0,  //窗口相对于父级的x和y坐标
+		300,300, //窗口的宽度和高度
+		NULL,  //父窗口，没有设为NULL
+		NULL,  //菜单，没有设为NULL
+		hInstance,//当前应用函数的实例句柄
+		NULL, //附加数据，没有设为NULL
+		);
+	//if (hwnd == 0) return 0;
+	ShowWindow(hwnd, SW_SHOW);   //展示窗口
+
+	UpdateWindow(hwnd);          //更新窗口
+
+	MSG msg;                     //定义消息结构体
+	
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);         //用以转换消息，例如，键盘按键的按下和上升为两个消息，重要的是按在哪个按键上，这里可以将消息进行有效的转换，
+		DispatchMessage(&msg);          //打包消息传递给回调函数WindowProc，以便进行处理,只有调用这个函数，WindowProc才能正确收到消息
+	}
+	return 0;
+}
+
+int flag = 0;
+LRESULT CALLBACK WindowProc(          //实现windowProc回调函数
+	_In_  HWND hwnd,
+	_In_  UINT uMsg,
+	_In_  WPARAM wParam,
+	_In_  LPARAM lParam
+)
+{
+	HDC hdc;
+	//RECT rect;
+	PAINTSTRUCT ps;
+	int x = 0, y = 0;
+	switch (uMsg)
+	{
+	case WM_PAINT:
+		hdc = BeginPaint(hwnd, &ps);
+		//TextOut(hdc, 0, 0, L"The first case", strlen("The first case"));
+		ReleaseDC(hwnd, hdc);
+		break;
+	case WM_CHAR:
+		//char mc[20];
+		//wsprintf( L"char is %d", wParam);
+		MessageBox(hwnd, L"you have enter: ", L"yang", MB_OK);
+		//ReleaseDC(hwnd, hdc);
+		break;
+	case WM_LBUTTONDOWN:  //WM_MOUSEMOVE
+		if (flag == 0) flag = 1;
+	    //MessageBox(hwnd, L"you have click: ", L"yang", MB_OK);
+		hdc = GetDC(hwnd);
+		x = LOWORD(lParam);//鼠标的横坐标
+		y = HIWORD(lParam);
+		//InvalidateRect(hwnd, NULL, true);
+		//UpdateWindow(hwnd);
+		//TextOut(hdc, 50, 0, L"Move", strlen("Move"));
+		TextOut(hdc,x,y, L"*", strlen("*"));
+		//ReleaseDC(hwnd, hdc);
+		//Sleep(2);
+	case WM_LBUTTONDOWN&WM_MOUSEMOVE:
+		hdc = GetDC(hwnd);
+		if (flag == 1) {
+			x = LOWORD(lParam);//鼠标的横坐标
+			y = HIWORD(lParam);
+			TextOut(hdc, x, y, L".", 1);
+		}
+		ReleaseDC(hwnd, hdc);
+		break;
+	case WM_LBUTTONUP:
+		if (flag == 1) flag = 0; 
+		break;
+	//case WM_MOVE:
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	}
+	return 0;
+}
